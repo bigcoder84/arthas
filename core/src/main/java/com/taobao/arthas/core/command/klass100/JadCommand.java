@@ -140,7 +140,8 @@ public class JadCommand extends AnnotatedCommand {
                 return;
             }
         }
-        
+
+        // 第一步：查找用户需要反编译的class类
         Set<Class<?>> matchedClasses = SearchUtils.searchClassOnly(inst, classPattern, isRegEx, code);
 
         try {
@@ -155,6 +156,7 @@ public class JadCommand extends AnnotatedCommand {
                 if(withInnerClasses.isEmpty()) {
                     withInnerClasses = matchedClasses;
                 }
+                // 第二步：处理反编译逻辑
                 status = processExactMatch(process, affect, inst, matchedClasses, withInnerClasses);
             }
             if (!this.sourceOnly) {
@@ -167,19 +169,33 @@ public class JadCommand extends AnnotatedCommand {
         }
     }
 
+    /**
+     * 处理反编译逻辑
+     * @param process
+     * @param affect
+     * @param inst
+     * @param matchedClasses
+     * @param withInnerClasses
+     * @return
+     */
     private ExitStatus processExactMatch(CommandProcess process, RowAffect affect, Instrumentation inst, Set<Class<?>> matchedClasses, Set<Class<?>> withInnerClasses) {
         Class<?> c = matchedClasses.iterator().next();
         Set<Class<?>> allClasses = new HashSet<Class<?>>(withInnerClasses);
         allClasses.add(c);
 
         try {
+            // 第一步：创建 ClassDumpTransformer
             ClassDumpTransformer transformer = new ClassDumpTransformer(allClasses);
+            // 第二步：触发 ClassDumpTransformer#transform 将指定Class字节码写入文件中
             InstrumentationUtils.retransformClasses(inst, transformer, allClasses);
 
+            // 第三步：获取已经写入到磁盘的字节码文件
             Map<Class<?>, File> classFiles = transformer.getDumpResult();
             File classFile = classFiles.get(c);
 
+            // 第四步：反编译指定的字节码文件
             Pair<String,NavigableMap<Integer,Integer>> decompileResult = Decompiler.decompileWithMappings(classFile.getAbsolutePath(), methodName, hideUnicode, lineNumber);
+            // 第五步：获取到反编译结果
             String source = decompileResult.getFirst();
             if (source != null) {
                 source = pattern.matcher(source).replaceAll("");
@@ -194,6 +210,7 @@ public class JadCommand extends AnnotatedCommand {
                 jadModel.setClassInfo(ClassUtils.createSimpleClassInfo(c));
                 jadModel.setLocation(ClassUtils.getCodeSource(c.getProtectionDomain().getCodeSource()));
             }
+            // 第六步：将反编译结果返回
             process.appendResult(jadModel);
 
             affect.rCnt(classFiles.keySet().size());

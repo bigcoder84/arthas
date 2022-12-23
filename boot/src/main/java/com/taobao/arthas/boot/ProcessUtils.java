@@ -53,6 +53,7 @@ public class ProcessUtils {
 
     @SuppressWarnings("resource")
     public static long select(boolean v, long telnetPortPid, String select) throws InputMismatchException {
+        // 获取本机所有的Java进程信息，PID->进程的主类名
         Map<Long, String> processMap = listProcessByJps(v);
         // Put the port that is already listening at the first
         if (telnetPortPid > 0 && processMap.containsKey(telnetPortPid)) {
@@ -85,7 +86,8 @@ public class ProcessUtils {
 		}
 
         AnsiLog.info("Found existing java process, please choose one and input the serial number of the process, eg : 1. Then hit ENTER.");
-        // print list
+
+        // 打印所有的Java进程信息
         int count = 1;
         for (String process : processMap.values()) {
             if (count == 1) {
@@ -96,7 +98,7 @@ public class ProcessUtils {
             count++;
         }
 
-        // read choice
+        // 监听用户输入，选择的进程
         String line = new Scanner(System.in).nextLine();
         if (line.trim().isEmpty()) {
             // get the first process id
@@ -124,6 +126,7 @@ public class ProcessUtils {
         Map<Long, String> result = new LinkedHashMap<Long, String>();
 
         String jps = "jps";
+        // 获取本机jps命令可执行文件
         File jpsFile = findJps();
         if (jpsFile != null) {
             jps = jpsFile.getAbsolutePath();
@@ -138,6 +141,7 @@ public class ProcessUtils {
             command = new String[] { jps, "-l" };
         }
 
+        // 执行 jps -l 获取所有运行中的Java进程信息
         List<String> lines = ExecutingCommand.runNative(command);
 
         AnsiLog.debug("jps result: " + lines);
@@ -151,6 +155,7 @@ public class ProcessUtils {
             try {
                 long pid = Long.parseLong(strings[0]);
                 if (pid == currentPid) {
+                    // 过滤掉正在运行的 Arthas PID
                     continue;
                 }
                 if (strings.length >= 2 && isJpsProcess(strings[1])) { // skip jps

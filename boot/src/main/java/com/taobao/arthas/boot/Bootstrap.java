@@ -137,6 +137,7 @@ public class Bootstrap {
             ARTHAS_LIB_DIR = new File(arthasLibDirEnv);
             AnsiLog.info("ARTHAS_LIB_DIR: " + arthasLibDirEnv);
         } else {
+            // ${home}/.arthas/lib，例：C:\Users\hanshan\.arthas\lib
             ARTHAS_LIB_DIR = new File(
                     System.getProperty("user.home") + File.separator + ".arthas" + File.separator + "lib");
         }
@@ -160,12 +161,22 @@ public class Bootstrap {
         }
     }
 
+    /**
+     * 通过索引下标注入属性，index = 0代表第一个参数默认代表pid
+     * 例如： java -jar arthas-booot.jar 28839 ，代表增强 28839 进程
+     * @param pid
+     */
     @Argument(argName = "pid", index = 0, required = false)
     @Description("Target pid")
     public void setPid(long pid) {
         this.pid = pid;
     }
 
+    /**
+     * 通过参数名称注入属性
+     * 例如：java -jar arthas-booot.jar -h
+     * @param help
+     */
     @Option(shortName = "h", longName = "help", flag = true)
     @Description("Print usage")
     public void setHelp(boolean help) {
@@ -390,9 +401,11 @@ public class Bootstrap {
             }
         }
 
+        // 获取参数中的pid
         long pid = bootstrap.getPid();
         // select pid
         if (pid < 0) {
+            // 如果启动时未通过参数指定Java进程PID，则获取本机所有Java进程列表，让用户选择
             try {
                 pid = ProcessUtils.select(bootstrap.isVerbose(), telnetPortPid, bootstrap.getSelect());
             } catch (InputMismatchException e) {
@@ -466,6 +479,7 @@ public class Bootstrap {
              * 3. compare two version
              * </pre>
              */
+            // 获取本地(C:\Users\hanshan\.arthas\lib)的arthas依赖的版本
             List<String> versionList = listNames(ARTHAS_LIB_DIR);
             Collections.sort(versionList);
 

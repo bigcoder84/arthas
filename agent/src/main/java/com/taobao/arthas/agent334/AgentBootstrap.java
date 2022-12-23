@@ -88,7 +88,7 @@ public class AgentBootstrap {
     }
 
     private static synchronized void main(String args, final Instrumentation inst) {
-        // 尝试判断arthas是否已在运行，如果是的话，直接就退出
+        // 第一步：尝试判断arthas是否已在运行，如果是的话，直接就退出
         try {
             Class.forName("java.arthas.SpyAPI"); // 加载不到会抛异常
             if (SpyAPI.isInited()) {

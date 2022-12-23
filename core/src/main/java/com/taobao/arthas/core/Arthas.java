@@ -11,7 +11,6 @@ import com.taobao.middleware.cli.CLIs;
 import com.taobao.middleware.cli.CommandLine;
 import com.taobao.middleware.cli.Option;
 import com.taobao.middleware.cli.TypedOption;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -86,6 +85,7 @@ public class Arthas {
     }
 
     private void attachAgent(Configure configure) throws Exception {
+        // 第一步：获取指定PID对应的 VirtualMachineDescriptor
         VirtualMachineDescriptor virtualMachineDescriptor = null;
         for (VirtualMachineDescriptor descriptor : VirtualMachine.list()) {
             String pid = descriptor.id();
@@ -96,13 +96,16 @@ public class Arthas {
         }
         VirtualMachine virtualMachine = null;
         try {
+            // 第二步：连接到Java虚拟机。
             if (null == virtualMachineDescriptor) { // 使用 attach(String pid) 这种方式
                 virtualMachine = VirtualMachine.attach("" + configure.getJavaPid());
             } else {
                 virtualMachine = VirtualMachine.attach(virtualMachineDescriptor);
             }
 
+            // 获取系统变量
             Properties targetSystemProperties = virtualMachine.getSystemProperties();
+            // 校验一下JDK版本
             String targetJavaVersion = JavaVersionUtils.javaVersionStr(targetSystemProperties);
             String currentJavaVersion = JavaVersionUtils.javaVersionStr();
             if (targetJavaVersion != null && currentJavaVersion != null) {
@@ -114,11 +117,13 @@ public class Arthas {
                 }
             }
 
+            // 该参数是通过，arthas-boot.jar 中启动 arthas-agent.jar时 传入的 -core参数，具体值是 arthas-agent.jar绝对路径
             String arthasAgentPath = configure.getArthasAgent();
             //convert jar path to unicode string
             configure.setArthasAgent(encodeArg(arthasAgentPath));
             configure.setArthasCore(encodeArg(configure.getArthasCore()));
             try {
+                // 第三步：加载 arthas-agent.jar，增强目标Java进程，实质上就是运行 com.taobao.arthas.agent334.AgentBootstrap.agentmain
                 virtualMachine.loadAgent(arthasAgentPath,
                         configure.getArthasCore() + ";" + configure.toString());
             } catch (IOException e) {

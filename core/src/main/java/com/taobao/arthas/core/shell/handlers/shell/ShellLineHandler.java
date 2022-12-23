@@ -24,6 +24,10 @@ public class ShellLineHandler implements Handler<String> {
         this.term = shell.term();
     }
 
+    /**
+     * 接收用户输入的命令行
+     * @param line the event to handle
+     */
     @Override
     public void handle(String line) {
         if (line == null) {
@@ -41,6 +45,7 @@ public class ShellLineHandler implements Handler<String> {
         }
 
         String name = first.value();
+        // 处理特殊命令，这些命令可以实时响应
         if (name.equals("exit") || name.equals("logout") || name.equals("q") || name.equals("quit")) {
             handleExit();
             return;
@@ -58,6 +63,7 @@ public class ShellLineHandler implements Handler<String> {
             return;
         }
 
+        //
         Job job = createJob(tokens);
         if (job != null) {
             job.run();

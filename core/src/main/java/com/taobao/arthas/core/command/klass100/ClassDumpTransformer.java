@@ -43,6 +43,7 @@ class ClassDumpTransformer implements ClassFileTransformer {
                             ProtectionDomain protectionDomain, byte[] classfileBuffer)
             throws IllegalClassFormatException {
         if (classesToEnhance.contains(classBeingRedefined)) {
+            // 将字节码写入到文件中
             dumpClassIfNecessary(classBeingRedefined, classfileBuffer);
         }
         return null;
